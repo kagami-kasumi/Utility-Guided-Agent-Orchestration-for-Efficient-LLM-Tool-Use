@@ -7,14 +7,14 @@ from xml.sax.saxutils import escape
 from PIL import Image, ImageDraw, ImageFont
 
 
-TITLE = "Overview of the Utility-Guided Agent Orchestration Framework"
+TITLE = "Overview of the Utility-Guided Agent Framework"
 
-OUT_DIR = Path("/home/inspur-02/lby/outputs/figures")
+OUT_DIR = Path(__file__).resolve().parents[1] / "outputs" / "figures"
 PNG_PATH = OUT_DIR / "utility_guided_agent_framework.png"
 SVG_PATH = OUT_DIR / "utility_guided_agent_framework.svg"
 
-WIDTH = 1600
-HEIGHT = 1900
+WIDTH = 1680
+HEIGHT = 980
 
 BG = "#FBF8F1"
 PRIMARY = "#22333B"
@@ -25,6 +25,10 @@ WHITE = "#FFFFFF"
 LINE = "#5E6B73"
 TEXT = "#1E2529"
 MUTED = "#59656C"
+BLUE_FILL = "#E7F0F6"
+BLUE_STROKE = "#537A8A"
+GREEN_FILL = "#E7F3EC"
+GREEN_STROKE = "#4F7A5E"
 
 
 def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -40,31 +44,68 @@ def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageF
     return ImageFont.load_default()
 
 
-FONT_TITLE = _load_font(54, bold=True)
-FONT_BOX = _load_font(34, bold=True)
-FONT_ITEM = _load_font(28, bold=False)
-FONT_SMALL = _load_font(24, bold=False)
+FONT_TITLE = _load_font(40, bold=True)
+FONT_PANEL = _load_font(24, bold=True)
+FONT_BOX = _load_font(22, bold=True)
+FONT_ITEM = _load_font(18, bold=False)
+FONT_SMALL = _load_font(16, bold=False)
+FONT_LOOP = _load_font(18, bold=True)
 
 
-def draw_round_box(draw: ImageDraw.ImageDraw, xy: tuple[int, int, int, int], fill: str, outline: str, radius: int = 28, width: int = 4) -> None:
+def draw_round_box(
+    draw: ImageDraw.ImageDraw,
+    xy: tuple[int, int, int, int],
+    fill: str,
+    outline: str,
+    *,
+    radius: int = 22,
+    width: int = 3,
+) -> None:
     draw.rounded_rectangle(xy, radius=radius, fill=fill, outline=outline, width=width)
 
 
-def centered_text(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], text: str, font: ImageFont.ImageFont, fill: str) -> None:
-    bbox = draw.multiline_textbbox((0, 0), text, font=font, spacing=6, align="center")
+def centered_text(
+    draw: ImageDraw.ImageDraw,
+    box: tuple[int, int, int, int],
+    text: str,
+    font: ImageFont.ImageFont,
+    fill: str,
+    *,
+    spacing: int = 4,
+) -> None:
+    bbox = draw.multiline_textbbox((0, 0), text, font=font, spacing=spacing, align="center")
     x = box[0] + ((box[2] - box[0]) - (bbox[2] - bbox[0])) / 2
-    y = box[1] + ((box[3] - box[1]) - (bbox[3] - bbox[1])) / 2 - 4
-    draw.multiline_text((x, y), text, font=font, fill=fill, spacing=6, align="center")
+    y = box[1] + ((box[3] - box[1]) - (bbox[3] - bbox[1])) / 2 - 1
+    draw.multiline_text((x, y), text, font=font, fill=fill, spacing=spacing, align="center")
 
 
-def draw_arrow(draw: ImageDraw.ImageDraw, x: int, y1: int, y2: int) -> None:
-    draw.line((x, y1, x, y2), fill=LINE, width=6)
-    draw.polygon([(x, y2), (x - 14, y2 - 22), (x + 14, y2 - 22)], fill=LINE)
+def draw_down_arrow(draw: ImageDraw.ImageDraw, x: int, y1: int, y2: int) -> None:
+    draw.line((x, y1, x, y2), fill=LINE, width=5)
+    draw.polygon([(x, y2), (x - 9, y2 - 14), (x + 9, y2 - 14)], fill=LINE)
 
 
-def pill(draw: ImageDraw.ImageDraw, xy: tuple[int, int, int, int], label: str, fill: str = WHITE, outline: str = ACCENT) -> None:
-    draw_round_box(draw, xy, fill=fill, outline=outline, radius=22, width=3)
-    centered_text(draw, xy, label, FONT_ITEM, TEXT)
+def draw_right_arrow(draw: ImageDraw.ImageDraw, x1: int, y: int, x2: int, *, color: str = LINE) -> None:
+    draw.line((x1, y, x2, y), fill=color, width=4)
+    draw.polygon([(x2, y), (x2 - 13, y - 8), (x2 - 13, y + 8)], fill=color)
+
+
+def draw_loop_path(draw: ImageDraw.ImageDraw, x: int, y_bottom: int, y_top: int, x_to: int) -> None:
+    draw.line((x, y_bottom, x, y_top), fill=ACCENT, width=5)
+    draw.line((x, y_top, x_to, y_top), fill=ACCENT, width=5)
+    draw.polygon([(x_to, y_top), (x_to - 14, y_top - 9), (x_to - 14, y_top + 9)], fill=ACCENT)
+
+
+def pill(
+    draw: ImageDraw.ImageDraw,
+    xy: tuple[int, int, int, int],
+    label: str,
+    *,
+    fill: str = WHITE,
+    outline: str = PRIMARY,
+    font: ImageFont.ImageFont = FONT_ITEM,
+) -> None:
+    draw_round_box(draw, xy, fill=fill, outline=outline, radius=18, width=2)
+    centered_text(draw, xy, label, font, TEXT)
 
 
 def make_png() -> None:
@@ -72,155 +113,254 @@ def make_png() -> None:
     img = Image.new("RGB", (WIDTH, HEIGHT), BG)
     draw = ImageDraw.Draw(img)
 
-    draw.rounded_rectangle((70, 70, WIDTH - 70, HEIGHT - 70), radius=40, outline="#D9CCB3", width=3, fill=BG)
+    draw_round_box(draw, (26, 16, WIDTH - 26, HEIGHT - 24), BG, "#D9CCB3", radius=30, width=3)
+    centered_text(draw, (80, 18, WIDTH - 80, 60), TITLE, FONT_TITLE, PRIMARY)
 
-    title_box = (130, 110, WIDTH - 130, 220)
-    centered_text(draw, title_box, TITLE, FONT_TITLE, PRIMARY)
+    left_panel = (56, 62, 1096, 926)
+    right_panel = (1130, 62, 1624, 926)
+    draw_round_box(draw, left_panel, "#FAF4E8", "#D9CCB3", radius=26, width=2)
+    draw_round_box(draw, right_panel, "#F8F2E7", "#D9CCB3", radius=26, width=2)
+    centered_text(draw, (110, 72, 1042, 102), "Agent Loop", FONT_PANEL, PRIMARY)
+    centered_text(draw, (1170, 72, 1588, 102), "Method Variants and Outputs", FONT_PANEL, PRIMARY)
 
-    center_x = WIDTH // 2
+    query = (184, 116, 968, 176)
+    state = (174, 200, 978, 316)
+    utility = (130, 354, 1022, 506)
+    action = (130, 542, 1022, 682)
+    observe = (184, 718, 968, 796)
+    update = (184, 832, 968, 880)
 
-    boxes = {
-        "query": (450, 280, 1150, 390),
-        "state_builder": (450, 450, 1150, 560),
-        "utility": (300, 640, 1300, 980),
-        "selector": (300, 1060, 1300, 1405),
-        "observation": (360, 1480, 1240, 1600),
-        "state_update": (450, 1670, 1150, 1780),
-    }
+    for box in (query, state, observe, update):
+        draw_round_box(draw, box, BOX_FILL, PRIMARY)
+    for box in (utility, action):
+        draw_round_box(draw, box, PANEL_FILL, ACCENT)
 
-    draw_round_box(draw, boxes["query"], BOX_FILL, PRIMARY)
-    draw_round_box(draw, boxes["state_builder"], BOX_FILL, PRIMARY)
-    draw_round_box(draw, boxes["utility"], PANEL_FILL, ACCENT)
-    draw_round_box(draw, boxes["selector"], PANEL_FILL, ACCENT)
-    draw_round_box(draw, boxes["observation"], BOX_FILL, PRIMARY)
-    draw_round_box(draw, boxes["state_update"], BOX_FILL, PRIMARY)
+    centered_text(draw, query, "User Query", FONT_BOX, TEXT)
 
-    centered_text(draw, boxes["query"], "User Query", FONT_BOX, TEXT)
-    centered_text(draw, boxes["state_builder"], "State Builder", FONT_BOX, TEXT)
-    centered_text(draw, (boxes["utility"][0], boxes["utility"][1] + 15, boxes["utility"][2], boxes["utility"][1] + 90), "Utility Scorer", FONT_BOX, TEXT)
-    centered_text(draw, (boxes["selector"][0], boxes["selector"][1] + 15, boxes["selector"][2], boxes["selector"][1] + 90), "Action Selector", FONT_BOX, TEXT)
-    centered_text(draw, boxes["observation"], "Environment / Tool Observation", FONT_BOX, TEXT)
-    centered_text(draw, boxes["state_update"], "State Update", FONT_BOX, TEXT)
+    centered_text(draw, (220, 212, 934, 240), "State Builder", FONT_BOX, TEXT)
+    for rect, label in [
+        ((202, 252, 414, 294), "history"),
+        ((472, 252, 684, 294), "evidence"),
+        ((742, 252, 954, 294), "tool traces"),
+    ]:
+        pill(draw, rect, label)
 
-    utility_y = 745
-    pill_w = 340
-    gap = 40
-    left = 350
-    for idx, label in enumerate(["Gain", "StepCost", "Uncertainty", "Redundancy"]):
-        row = idx // 2
-        col = idx % 2
-        x1 = left + col * (pill_w + gap)
-        y1 = utility_y + row * 110
-        pill(draw, (x1, y1, x1 + pill_w, y1 + 78), label)
+    centered_text(draw, (170, 366, 982, 394), "Utility Scorer", FONT_BOX, TEXT)
+    for rect, label in [
+        ((164, 416, 372, 462), "Gain"),
+        ((392, 416, 600, 462), "Step Cost"),
+        ((620, 416, 828, 462), "Uncertainty"),
+        ((392, 468, 600, 494), "Redundancy"),
+        ((620, 468, 828, 494), "Budget Aware"),
+    ]:
+        pill(draw, rect, label, outline=ACCENT)
 
-    selector_labels = ["respond", "retrieve", "tool_call", "verify", "stop"]
-    selector_positions = [
-        (360, 1170, 640, 1248),
-        (680, 1170, 960, 1248),
-        (1000, 1170, 1280, 1248),
-        (520, 1290, 800, 1368),
-        (840, 1290, 1120, 1368),
-    ]
-    for pos, label in zip(selector_positions, selector_labels):
-        pill(draw, pos, label, fill=WHITE, outline=PRIMARY)
+    centered_text(draw, (170, 554, 982, 582), "Action Selector", FONT_BOX, TEXT)
+    for rect, label in [
+        ((162, 606, 356, 650), "respond"),
+        ((376, 606, 570, 650), "retrieve"),
+        ((590, 606, 784, 650), "tool_call"),
+        ((804, 606, 988, 650), "verify / stop"),
+    ]:
+        pill(draw, rect, label)
 
-    draw_arrow(draw, center_x, boxes["query"][3], boxes["state_builder"][1] - 18)
-    draw_arrow(draw, center_x, boxes["state_builder"][3], boxes["utility"][1] - 18)
-    draw_arrow(draw, center_x, boxes["utility"][3], boxes["selector"][1] - 18)
-    draw_arrow(draw, center_x, boxes["selector"][3], boxes["observation"][1] - 18)
-    draw_arrow(draw, center_x, boxes["observation"][3], boxes["state_update"][1] - 18)
+    centered_text(draw, (220, 732, 934, 756), "Environment / Tools", FONT_BOX, TEXT)
+    for rect, label in [
+        ((220, 764, 414, 788), "retriever"),
+        ((480, 764, 674, 788), "search"),
+        ((740, 764, 934, 788), "verifier"),
+    ]:
+        pill(draw, rect, label, font=FONT_SMALL)
+    centered_text(draw, update, "State Update", FONT_BOX, TEXT)
 
-    loop_left = 180
-    draw.line((loop_left, boxes["state_update"][1] + 55, loop_left, boxes["utility"][1] + 70), fill=ACCENT, width=6)
-    draw.line((loop_left, boxes["utility"][1] + 70, 290, boxes["utility"][1] + 70), fill=ACCENT, width=6)
-    draw.polygon([(290, boxes["utility"][1] + 70), (268, boxes["utility"][1] + 56), (268, boxes["utility"][1] + 84)], fill=ACCENT)
-    draw.text((loop_left - 22, boxes["state_update"][1] + 15), "↺", font=_load_font(42, bold=True), fill=ACCENT)
-    draw.text((95, 1210), "Iterative\nstate feedback", font=FONT_SMALL, fill=MUTED, spacing=4, align="center")
+    method_box = (1188, 124, 1566, 376)
+    eval_box = (1188, 414, 1566, 696)
+    draw_round_box(draw, method_box, BLUE_FILL, BLUE_STROKE, radius=24, width=3)
+    draw_round_box(draw, eval_box, GREEN_FILL, GREEN_STROKE, radius=24, width=3)
+    centered_text(draw, (1210, 138, 1544, 166), "Method Variants", FONT_BOX, PRIMARY)
+    for rect, label in [
+        ((1220, 172, 1376, 216), "direct"),
+        ((1400, 172, 1556, 216), "workflow"),
+        ((1220, 232, 1376, 276), "react"),
+        ((1400, 232, 1556, 276), "threshold"),
+        ((1310, 292, 1466, 336), "policy"),
+    ]:
+        pill(draw, rect, label, fill=WHITE, outline=BLUE_STROKE)
+
+    centered_text(draw, (1210, 430, 1544, 458), "Evaluation Outputs", FONT_BOX, PRIMARY)
+    for rect, label in [
+        ((1220, 474, 1390, 524), "pilot runs"),
+        ((1410, 474, 1556, 524), "expanded runs"),
+        ((1220, 542, 1390, 592), "Pareto figures"),
+        ((1410, 542, 1556, 592), "tables"),
+        ((1310, 610, 1466, 660), "traces"),
+    ]:
+        pill(draw, rect, label, fill=WHITE, outline=GREEN_STROKE)
+
+    center_x = 576
+    draw_down_arrow(draw, center_x, query[3], state[1] - 10)
+    draw_down_arrow(draw, center_x, state[3], utility[1] - 10)
+    draw_down_arrow(draw, center_x, utility[3], action[1] - 10)
+    draw_down_arrow(draw, center_x, action[3], observe[1] - 8)
+    draw_down_arrow(draw, center_x, observe[3], update[1] - 12)
+
+    draw_loop_path(draw, 92, update[1] + 24, state[1] + 12, 160)
+    centered_text(draw, (34, 428, 112, 612), "feedback\nloop", FONT_LOOP, ACCENT)
+
+    draw_right_arrow(draw, 1038, 430, 1170, color=ACCENT)
+    draw_right_arrow(draw, 1038, 612, 1170, color=GREEN_STROKE)
 
     img.save(PNG_PATH, format="PNG")
 
 
-def _svg_box(x1: int, y1: int, x2: int, y2: int, fill: str, stroke: str, rx: int = 28, stroke_width: int = 4) -> str:
+def _svg_box(x1: int, y1: int, x2: int, y2: int, fill: str, stroke: str, *, rx: int = 22, stroke_width: int = 3) -> str:
     return f'<rect x="{x1}" y="{y1}" width="{x2-x1}" height="{y2-y1}" rx="{rx}" ry="{rx}" fill="{fill}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
 
 
-def _svg_text(x: int, y: int, text: str, size: int, weight: str = "600", color: str = TEXT, anchor: str = "middle") -> str:
+def _svg_text(x: int, y: int, text: str, size: int, *, weight: str = "600", color: str = TEXT, anchor: str = "middle") -> str:
     lines = text.split("\n")
     if len(lines) == 1:
         return f'<text x="{x}" y="{y}" text-anchor="{anchor}" font-family="DejaVu Sans, Arial, sans-serif" font-size="{size}" font-weight="{weight}" fill="{color}">{escape(text)}</text>'
-    tspan = []
-    line_h = int(size * 1.25)
+    line_h = int(size * 1.28)
     start_y = y - ((len(lines) - 1) * line_h) / 2
+    spans = []
     for i, line in enumerate(lines):
         dy = 0 if i == 0 else line_h
-        tspan.append(f'<tspan x="{x}" dy="{dy if i else 0}">{escape(line)}</tspan>')
-    return f'<text x="{x}" y="{int(start_y)}" text-anchor="{anchor}" font-family="DejaVu Sans, Arial, sans-serif" font-size="{size}" font-weight="{weight}" fill="{color}">{"".join(tspan)}</text>'
+        spans.append(f'<tspan x="{x}" dy="{dy if i else 0}">{escape(line)}</tspan>')
+    return f'<text x="{x}" y="{int(start_y)}" text-anchor="{anchor}" font-family="DejaVu Sans, Arial, sans-serif" font-size="{size}" font-weight="{weight}" fill="{color}">{"".join(spans)}</text>'
 
 
-def _svg_arrow(x: int, y1: int, y2: int) -> str:
+def _svg_down_arrow(x: int, y1: int, y2: int) -> str:
     return (
-        f'<line x1="{x}" y1="{y1}" x2="{x}" y2="{y2}" stroke="{LINE}" stroke-width="6"/>'
-        f'<polygon points="{x},{y2} {x-14},{y2-22} {x+14},{y2-22}" fill="{LINE}"/>'
+        f'<line x1="{x}" y1="{y1}" x2="{x}" y2="{y2}" stroke="{LINE}" stroke-width="5"/>'
+        f'<polygon points="{x},{y2} {x-9},{y2-14} {x+9},{y2-14}" fill="{LINE}"/>'
     )
 
 
+def _svg_right_arrow(x1: int, y: int, x2: int, *, color: str = LINE) -> str:
+    return (
+        f'<line x1="{x1}" y1="{y}" x2="{x2}" y2="{y}" stroke="{color}" stroke-width="4"/>'
+        f'<polygon points="{x2},{y} {x2-13},{y-8} {x2-13},{y+8}" fill="{color}"/>'
+    )
+
+
+def _svg_loop(x: int, y_bottom: int, y_top: int, x_to: int) -> str:
+    return (
+        f'<line x1="{x}" y1="{y_bottom}" x2="{x}" y2="{y_top}" stroke="{ACCENT}" stroke-width="5"/>'
+        f'<line x1="{x}" y1="{y_top}" x2="{x_to}" y2="{y_top}" stroke="{ACCENT}" stroke-width="5"/>'
+        f'<polygon points="{x_to},{y_top} {x_to-14},{y_top-9} {x_to-14},{y_top+9}" fill="{ACCENT}"/>'
+    )
+
+
+def _svg_pill(x1: int, y1: int, x2: int, y2: int, label: str, *, fill: str = WHITE, outline: str = PRIMARY, size: int = 18) -> str:
+    return _svg_box(x1, y1, x2, y2, fill, outline, rx=18, stroke_width=2) + _svg_text((x1 + x2) // 2, y1 + (y2 - y1) // 2 + 6, label, size, weight="400")
+
+
 def make_svg() -> None:
-    loop_label = _svg_text(112, 1220, "Iterative\nstate feedback", 24, weight="400", color=MUTED)
-    loop_icon = _svg_text(160, 1708, "↺", 38, weight="700", color=ACCENT)
-    utility_pills = []
-    pill_specs = [
-        (350, 745, 690, 823, "Gain"),
-        (730, 745, 1070, 823, "StepCost"),
-        (350, 855, 690, 933, "Uncertainty"),
-        (730, 855, 1070, 933, "Redundancy"),
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}">',
+        f'<rect width="100%" height="100%" fill="{BG}"/>',
+        _svg_box(26, 16, WIDTH - 26, HEIGHT - 24, BG, "#D9CCB3", rx=30, stroke_width=3),
+        _svg_text(WIDTH // 2, 52, TITLE, 40, weight="700", color=PRIMARY),
+        _svg_box(56, 62, 1096, 926, "#FAF4E8", "#D9CCB3", rx=26, stroke_width=2),
+        _svg_box(1130, 62, 1624, 926, "#F8F2E7", "#D9CCB3", rx=26, stroke_width=2),
+        _svg_text(576, 92, "Agent Loop", 24, weight="700", color=PRIMARY),
+        _svg_text(1378, 92, "Method Variants and Outputs", 24, weight="700", color=PRIMARY),
     ]
-    for x1, y1, x2, y2, label in pill_specs:
-        utility_pills.append(_svg_box(x1, y1, x2, y2, WHITE, ACCENT, rx=22, stroke_width=3))
-        utility_pills.append(_svg_text((x1 + x2) // 2, y1 + 48, label, 28, weight="400"))
 
-    selector_pills = []
-    selector_specs = [
-        (360, 1170, 640, 1248, "respond"),
-        (680, 1170, 960, 1248, "retrieve"),
-        (1000, 1170, 1280, 1248, "tool_call"),
-        (520, 1290, 800, 1368, "verify"),
-        (840, 1290, 1120, 1368, "stop"),
-    ]
-    for x1, y1, x2, y2, label in selector_specs:
-        selector_pills.append(_svg_box(x1, y1, x2, y2, WHITE, PRIMARY, rx=22, stroke_width=3))
-        selector_pills.append(_svg_text((x1 + x2) // 2, y1 + 48, label, 28, weight="400"))
+    for box in [
+        _svg_box(184, 116, 968, 176, BOX_FILL, PRIMARY),
+        _svg_box(174, 200, 978, 316, BOX_FILL, PRIMARY),
+        _svg_box(130, 354, 1022, 506, PANEL_FILL, ACCENT),
+        _svg_box(130, 542, 1022, 682, PANEL_FILL, ACCENT),
+        _svg_box(184, 718, 968, 796, BOX_FILL, PRIMARY),
+        _svg_box(184, 832, 968, 880, BOX_FILL, PRIMARY),
+    ]:
+        parts.append(box)
 
-    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}">
-  <rect width="100%" height="100%" fill="{BG}"/>
-  <rect x="70" y="70" width="{WIDTH-140}" height="{HEIGHT-140}" rx="40" ry="40" fill="{BG}" stroke="#D9CCB3" stroke-width="3"/>
-  {_svg_text(WIDTH//2, 175, TITLE, 40, weight="700", color=PRIMARY)}
-  {_svg_box(450, 280, 1150, 390, BOX_FILL, PRIMARY)}
-  {_svg_box(450, 450, 1150, 560, BOX_FILL, PRIMARY)}
-  {_svg_box(300, 640, 1300, 980, PANEL_FILL, ACCENT)}
-  {_svg_box(300, 1060, 1300, 1405, PANEL_FILL, ACCENT)}
-  {_svg_box(360, 1480, 1240, 1600, BOX_FILL, PRIMARY)}
-  {_svg_box(450, 1670, 1150, 1780, BOX_FILL, PRIMARY)}
-  {_svg_text(800, 348, "User Query", 34, color=TEXT)}
-  {_svg_text(800, 518, "State Builder", 34, color=TEXT)}
-  {_svg_text(800, 720, "Utility Scorer", 34, color=TEXT)}
-  {_svg_text(800, 1140, "Action Selector", 34, color=TEXT)}
-  {_svg_text(800, 1550, "Environment / Tool Observation", 34, color=TEXT)}
-  {_svg_text(800, 1738, "State Update", 34, color=TEXT)}
-  {''.join(utility_pills)}
-  {''.join(selector_pills)}
-  {_svg_arrow(800, 390, 432)}
-  {_svg_arrow(800, 560, 622)}
-  {_svg_arrow(800, 980, 1042)}
-  {_svg_arrow(800, 1405, 1462)}
-  {_svg_arrow(800, 1600, 1652)}
-  <line x1="180" y1="1725" x2="180" y2="710" stroke="{ACCENT}" stroke-width="6"/>
-  <line x1="180" y1="710" x2="290" y2="710" stroke="{ACCENT}" stroke-width="6"/>
-  <polygon points="290,710 268,696 268,724" fill="{ACCENT}"/>
-  {loop_label}
-  {loop_icon}
-</svg>
-"""
-    SVG_PATH.write_text(svg, encoding="utf-8")
+    parts.extend(
+        [
+            _svg_text(576, 152, "User Query", 22, color=TEXT),
+            _svg_text(576, 228, "State Builder", 22, color=TEXT),
+            _svg_text(576, 380, "Utility Scorer", 22, color=TEXT),
+            _svg_text(576, 568, "Action Selector", 22, color=TEXT),
+            _svg_text(576, 746, "Environment / Tools", 22, color=TEXT),
+            _svg_text(576, 862, "State Update", 22, color=TEXT),
+        ]
+    )
+
+    for spec in [
+        (202, 252, 414, 294, "history"),
+        (472, 252, 684, 294, "evidence"),
+        (742, 252, 954, 294, "tool traces"),
+        (164, 416, 372, 462, "Gain"),
+        (392, 416, 600, 462, "Step Cost"),
+        (620, 416, 828, 462, "Uncertainty"),
+        (392, 468, 600, 494, "Redundancy"),
+        (620, 468, 828, 494, "Budget Aware"),
+        (162, 606, 356, 650, "respond"),
+        (376, 606, 570, 650, "retrieve"),
+        (590, 606, 784, 650, "tool_call"),
+        (804, 606, 988, 650, "verify / stop"),
+        (220, 764, 414, 788, "retriever"),
+        (480, 764, 674, 788, "search"),
+        (740, 764, 934, 788, "verifier"),
+    ]:
+        outline = ACCENT if spec[4] in {"Gain", "Step Cost", "Uncertainty", "Redundancy", "Budget Aware"} else PRIMARY
+        parts.append(_svg_pill(*spec, outline=outline))
+
+    for spec in [
+        (1188, 184, 1566, 454, "", "", "", ""),
+        (1188, 500, 1566, 790, "", "", "", ""),
+    ]:
+        pass
+
+    parts.append(_svg_box(1188, 124, 1566, 376, BLUE_FILL, BLUE_STROKE, rx=24, stroke_width=3))
+    parts.append(_svg_box(1188, 414, 1566, 696, GREEN_FILL, GREEN_STROKE, rx=24, stroke_width=3))
+    parts.append(_svg_text(1377, 150, "Method Variants", 22, color=PRIMARY))
+    parts.append(_svg_text(1377, 440, "Evaluation Outputs", 22, color=PRIMARY))
+
+    for spec in [
+        (1220, 172, 1376, 216, "direct"),
+        (1400, 172, 1556, 216, "workflow"),
+        (1220, 232, 1376, 276, "react"),
+        (1400, 232, 1556, 276, "threshold"),
+        (1310, 292, 1466, 336, "policy"),
+    ]:
+        parts.append(_svg_pill(*spec, fill=WHITE, outline=BLUE_STROKE))
+
+    for spec in [
+        (1220, 474, 1390, 524, "pilot runs"),
+        (1410, 474, 1556, 524, "expanded runs"),
+        (1220, 542, 1390, 592, "Pareto figures"),
+        (1410, 542, 1556, 592, "tables"),
+        (1310, 610, 1466, 660, "traces"),
+    ]:
+        parts.append(_svg_pill(*spec, fill=WHITE, outline=GREEN_STROKE))
+
+    for spec in [
+        (248, 762, 458, 788, "direct / workflow"),
+        (480, 762, 690, 788, "react / threshold"),
+        (712, 762, 922, 788, "policy"),
+    ]:
+        parts.append(_svg_pill(*spec, fill=BLUE_FILL, outline=BLUE_STROKE, size=16))
+
+    parts.extend(
+        [
+            _svg_down_arrow(576, 176, 190),
+            _svg_down_arrow(576, 316, 342),
+            _svg_down_arrow(576, 506, 530),
+            _svg_down_arrow(576, 682, 708),
+            _svg_down_arrow(576, 796, 820),
+            _svg_loop(92, 856, 212, 160),
+            _svg_text(72, 510, "feedback\nloop", 18, weight="700", color=ACCENT),
+            _svg_right_arrow(1038, 430, 1170, color=ACCENT),
+            _svg_right_arrow(1038, 612, 1170, color=GREEN_STROKE),
+        ]
+    )
+
+    parts.append("</svg>")
+    SVG_PATH.write_text("\n".join(parts), encoding="utf-8")
 
 
 def main() -> None:

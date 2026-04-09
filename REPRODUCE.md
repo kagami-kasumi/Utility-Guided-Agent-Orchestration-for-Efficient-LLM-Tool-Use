@@ -29,8 +29,8 @@ The generated outputs are written under `outputs/` and are intentionally ignored
 Create and activate a clean conda environment:
 
 ```bash
-conda create -y -n lby python=3.11
-conda activate lby
+conda create -y -n blind_repo_env python=3.11
+conda activate blind_repo_env
 pip install -r requirements.txt
 ```
 
